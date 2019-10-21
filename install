@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. config
+
+if [[ $VIEWED == 0 ]];
+    then
+       echo "Please review your config file, marked VIEWED as 1, then continue"
+       exit 1
+fi
+
+if ! [ $(id -u) = 0 ]; then
+   echo "Please run the install script as superuser!"
+   exit 1
+fi
+
+bash ./scripts/installers/php.sh
+bash ./scripts/installers/vsm.sh
+bash ./scripts/installers/nginx.sh
+bash ./scripts/installers/mysql.sh
+bash ./scripts/installers/letsencrypt.sh
+bash ./scripts/installers/users.sh
+
+echo "Pending installs completed"

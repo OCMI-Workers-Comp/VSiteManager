@@ -1,0 +1,168 @@
+#!/usr/bin/php
+<?php
+
+define('SCRIPTS', __DIR__.'/../scripts');
+define('LIBS', __DIR__.'/../lib');
+define('SAMPLES', __DIR__.'/../data');
+define('VSITES', '/etc/nginx/sites-available');
+define('WEBROOTS', '/var/www');
+
+/* Scripts */
+
+require_once LIBS.'/lib.php'; 
+
+/* Listen */
+
+if (!isset($argv[1])) {
+    l('Missing argument');
+    exit;
+}
+
+if ($argv[1] !== 'config') {
+	$installs = ['NGINX', 'PHP', 'VSM', 'MYSQL', 'CERTBOT', 'USERS'];
+
+	foreach ($installs as $v) {
+		if (intval(getVar($v.'_INSTALL')) !== 1) {
+			l('Verify that '.$v.' is installed by running ./install');
+			exit;
+		}
+	}
+}
+
+switch ($argv[1]) {
+    case 'config':
+        changeVar($argv[2], $argv[3]);
+    break;
+    case 'usage':
+		l('USAGE:'.PHP_EOL);
+		l('UPDATE A VALUE: vsm config [variable] [value]');
+		l('CREATE A SITE: vsm sites new [domain] [--ssl] [--db] [--laravel] [--www] [--full]');
+		l('PURGE A SITE: vsm sites purge [domain]');
+		l('LARAVELIZE (Virtual site reconfiguration): vsm sites laravelize [domain]');
+		l('SET UP SSL: vsm sites ssl [domain]');
+		l('AUTORENEW SSL: vsm sites autorenew');
+		l('ENABLE NGINX SITE: vsm sites enable [domain]');
+		l('DISABLE NGINX SITE: vsm sites disable [domain]');
+	break;
+	case 'init':
+		if (posix_getuid() !== 0){
+			l('Please run this as root');
+			exit;
+		}
+
+		$nginx = file_get_contents('/etc/nginx/nginx.conf');
+		$nginx = str_replace('user www-data;', 'user vsm vsm-web;', $nginx);
+		file_put_contents('/etc/nginx/nginx.conf', $nginx);
+
+		$phpfpm = file_get_contents('/etc/php/'.getVar('PHPVER').'/fpm/pool.d/www.conf');
+
+		$phpfpm = str_replace('user = www-data', 'user = vsm', $phpfpm);
+		$phpfpm = str_replace('group = www-data', 'group = vsm-web', $phpfpm);
+		$phpfpm = str_replace('listen.owner = www-data', 'listen.user = vsm', $phpfpm);
+		$phpfpm = str_replace('listen.group = www-data', 'listen.group = vsm-web', $phpfpm);
+
+		file_put_contents('/etc/php/'.getVar('PHPVER').'/fpm/pool.d/www.conf', $phpfpm);
+	break;
+    case 'sites':
+		switch($argv[2]) {
+			case 'new':
+				if (posix_getuid() !== 0){
+					l('Please run this as root');
+					exit;
+				}
+
+				if (siteExists($argv[3])) {
+					throw new Exception('Site '.$argv[3].' already exists');
+				}
+
+				$sites = [$argv[3]];
+
+				if (opt($argv, '--www')) {
+					$sites[] = 'www.'.$argv[3];
+				}
+
+				l('Creating virtual site for hostnames: '.implode(', ', $sites));
+
+				$site = createVsite($sites);
+
+				if (opt($argv, '--laravel') || opt($argv, '--full')) {
+					l('Adding Laravel environment settings');
+
+					updateDirective($site, '#TRYFILES_', chr(9).chr(9).'try_files $uri $uri/ /index.php?$query_string;');
+					updateDirective($site, '#ROOTDIR_', chr(9).'root /var/www/'.$sites[0].'/public;');
+
+					passthru('sudo service nginx reload');
+				}
+
+				if (opt($argv, '--db') || opt($argv, '--full')) {
+					l('Creating database: '.explode('.', $sites[0])[0]);
+					createDb(explode('.', $sites[0])[0]);
+				}
+
+				if (opt($argv, '--ssl')) {
+					l('Issuing SSL Certificate');
+					passthru('sudo certbot --nginx -d '.implode(' -d ', $sites));
+				}
+
+				passthru('ln -s /etc/nginx/sites-available/'.$sites[0].'.conf /etc/nginx/sites-enabled/'.$sites[0]);
+
+				passthru('sudo service nginx reload');
+
+				l('Done');
+			break;
+			case 'ssl':
+				validateSite($argv[3]);
+
+				l('Issuing SSL Certificate');
+				passthru('sudo certbot --nginx -d '.$argv[3]);
+
+				l('Done');
+			break;
+			case 'laravelize':
+				validateSite($argv[3]);
+
+				l('Adding Laravel environment settings');
+
+				updateDirective(WEBROOTS.'/'.$argv[3], '#TRYFILES_', 'try_files $uri $uri/ /index.php?$query_string');
+				updateDirective(WEBROOTS.'/'.$argv[3], '#ROOTDIR_', 'root /var/www/'.$argv[3].'/public');
+
+				l('Done');
+			break;
+			case 'autorenew':
+				passthru('sudo certbot renew --dry-run');
+
+				l('Done');
+			break;
+			case 'purge':
+				if (posix_getuid() !== 0){
+					l('Please run this as root');
+					exit;
+				}
+
+				if (trim(readline('Are you sure you wish to purge (Does not delete database) '.$argv[3].'? (Y/N) ')) === 'Y') {
+					if (file_exists(VSITES.'/'.$argv[3].'.conf')) {
+						unlink(VSITES.'/'.$argv[3].'.conf');
+					}
+
+					if (file_exists(WEBROOTS.'/'.$argv[3])) {
+						passthru('rm -rf '.WEBROOTS.'/'.$argv[3]);
+					}
+				} else {
+					l('Aborting');
+				}
+			break;
+			case 'disable':
+				if (file_exists('/etc/nginx/sites-enabled/'.$argv[3])) {
+					unlink('/etc/nginx/sites-enabled/'.$argv[3]);
+				}
+
+				l('Done');
+			break;
+			case 'enable':
+				passthru('ln -s /etc/nginx/sites-available/'.$argv[3].'.conf /etc/nginx/sites-enabled/'.$argv[3]);
+
+				l('Done');
+			break;
+		}
+    break;
+}

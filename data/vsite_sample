@@ -1,0 +1,22 @@
+server {
+        listen 80;
+
+        #ROOTDIR_
+        root ${ROOT_DIRECTORY};
+
+        index index.php index.html index.htm;
+
+        #SERVERNAME_
+        server_name ${SERVER_NAME};
+
+        location / {
+            #TRYFILES_
+            try_files $uri $uri/ =404;
+        }
+
+        location ~ \.php$ {
+           include snippets/fastcgi-php.conf;
+           fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+        }
+}
+
