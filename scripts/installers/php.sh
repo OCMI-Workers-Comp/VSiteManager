@@ -18,6 +18,6 @@ apt-get install software-properties-common
 add-apt-repository ppa:ondrej/php
 apt-get update
 apt-get install php$PHPVER
-apt-get install php-curl php-dev php-gd php-mbstring php-zip php-mysql php-pdo php-xml php-pdo php-mysql
+apt-get install php$PHPVER-curl php-$PHPVERdev php$PHPVER-gd php$PHPVER-mbstring php$PHPVER-zip php$PHPVER-mysql php$PHPVER-pdo php$PHPVER-xml php$PHPVER-pdo php$PHPVER-mysql php$PHPVER-imagick imagick
 apt-get install php-fpm
 
