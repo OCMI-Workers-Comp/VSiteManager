@@ -29,6 +29,13 @@ if ($argv[1] !== 'config') {
 	}
 }
 
+if ($argv[1] !== 'init') {
+	if (intval(getVar('INITIALIZED')) === 0) {
+		l('Initialize by running vsm init before continuing');
+		exit;
+	}
+}
+
 switch ($argv[1]) {
     case 'config':
         changeVar($argv[2], $argv[3]);
@@ -62,6 +69,8 @@ switch ($argv[1]) {
 		$phpfpm = str_replace('listen.group = www-data', 'listen.group = vsm-web', $phpfpm);
 
 		file_put_contents('/etc/php/'.getVar('PHPVER').'/fpm/pool.d/www.conf', $phpfpm);
+
+		changeVar('INITIALIZED', 1);
 	break;
     case 'sites':
 		switch($argv[2]) {
