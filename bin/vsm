@@ -5,6 +5,7 @@ define('SCRIPTS', __DIR__.'/../scripts');
 define('LIBS', __DIR__.'/../lib');
 define('SAMPLES', __DIR__.'/../data');
 define('VSITES', '/etc/nginx/sites-available');
+define('VLINKS', '/etc/nginx/sites-enabled');
 define('WEBROOTS', '/var/www');
 
 /* Scripts */
@@ -50,6 +51,7 @@ switch ($argv[1]) {
 		l('AUTORENEW SSL: vsm sites autorenew');
 		l('ENABLE NGINX SITE: vsm sites enable [domain]');
 		l('DISABLE NGINX SITE: vsm sites disable [domain]');
+		l('INITIALIZE GIT: vsm sites git [domain] [remote] [branch]');
 	break;
 	case 'init':
 		if (posix_getuid() !== 0){
@@ -65,7 +67,7 @@ switch ($argv[1]) {
 
 		$phpfpm = str_replace('user = www-data', 'user = vsm', $phpfpm);
 		$phpfpm = str_replace('group = www-data', 'group = vsm-web', $phpfpm);
-		$phpfpm = str_replace('listen.owner = www-data', 'listen.user = vsm', $phpfpm);
+		$phpfpm = str_replace('listen.owner = www-data', 'listen.owner = vsm', $phpfpm);
 		$phpfpm = str_replace('listen.group = www-data', 'listen.group = vsm-web', $phpfpm);
 
 		file_put_contents('/etc/php/'.getVar('PHPVER').'/fpm/pool.d/www.conf', $phpfpm);
@@ -153,6 +155,10 @@ switch ($argv[1]) {
 						unlink(VSITES.'/'.$argv[3].'.conf');
 					}
 
+					if (file_exists(VLINKS.'/'.$argv[3].'.conf')) {
+						unlink(VLINKS.'/'.$argv[3].'.conf');
+					}
+
 					if (file_exists(WEBROOTS.'/'.$argv[3])) {
 						passthru('rm -rf '.WEBROOTS.'/'.$argv[3]);
 					}
@@ -169,6 +175,18 @@ switch ($argv[1]) {
 			break;
 			case 'enable':
 				passthru('ln -s /etc/nginx/sites-available/'.$argv[3].'.conf /etc/nginx/sites-enabled/'.$argv[3]);
+
+				l('Done');
+			break;
+			case 'git':
+				validateSite($argv[3]);
+
+				passthru('cd '.WEBROOTS.'/'.$argv[3]);
+				passthru('git init');
+				passthru('git remote add origin '.$argv[4]);
+				passthru('git fetch');
+				passthru('git pull origin '.$argv[5]);
+				passthru('git checkout '.$argv[5]);
 
 				l('Done');
 			break;

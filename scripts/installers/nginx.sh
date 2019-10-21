@@ -11,5 +11,10 @@ fi
 nginx=stable # use nginx=development for latest development version
 add-apt-repository ppa:nginx/$nginx
 apt-get update
+
+if service --status-all | grep -Fq 'apache2'; then    
+  sudo service apache2 restart    
+fi
+
 apt-get install nginx
 vsm config NGINX_INSTALL 1
