@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VIEWED=1
+VIEWED=0
 PHPVER=7.3
 RELEASE=bionic
 MYSQL_DEB=mysql-apt-config_0.8.14-1_all.deb
