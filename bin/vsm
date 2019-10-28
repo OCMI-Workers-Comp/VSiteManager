@@ -51,7 +51,9 @@ switch ($argv[1]) {
 		l('AUTORENEW SSL: vsm sites autorenew');
 		l('ENABLE NGINX SITE: vsm sites enable [domain]');
 		l('DISABLE NGINX SITE: vsm sites disable [domain]');
-		l('INITIALIZE GIT: vsm sites git [domain] [remote] [branch]');
+		// l('INITIALIZE GIT: vsm sites git [domain] [remote] [branch]');
+		l('INITIALIZE EXISTING LARAVEL PROJECT: vsm sites gitlaravel [domain] [remote] [branch]');
+		l('ADD USER TO VSM-WEB GROUP: vsm adduser [username]');
 	break;
 	case 'init':
 		if (posix_getuid() !== 0){
@@ -73,6 +75,9 @@ switch ($argv[1]) {
 		file_put_contents('/etc/php/'.getVar('PHPVER').'/fpm/pool.d/www.conf', $phpfpm);
 
 		changeVar('INITIALIZED', 1);
+	break;
+	case 'adduser':
+		passthru('sudo usermod -a -G vsm-web '.$argv[2]);
 	break;
     case 'sites':
 		switch($argv[2]) {
@@ -150,7 +155,7 @@ switch ($argv[1]) {
 					exit;
 				}
 
-				if (trim(readline('Are you sure you wish to purge (Does not delete database) '.$argv[3].'? (Y/N) ')) === 'Y') {
+				if (trim(readline('Are you sure you wish to purge (DELETES DATABASE!) '.$argv[3].'? (Y/N) ')) === 'Y') {
 					if (file_exists(VSITES.'/'.$argv[3].'.conf')) {
 						unlink(VSITES.'/'.$argv[3].'.conf');
 					}
@@ -162,6 +167,8 @@ switch ($argv[1]) {
 					if (file_exists(WEBROOTS.'/'.$argv[3])) {
 						passthru('rm -rf '.WEBROOTS.'/'.$argv[3]);
 					}
+
+					deleteDb(explode('.', $argv[3])[0]);
 				} else {
 					l('Aborting');
 				}
@@ -178,15 +185,23 @@ switch ($argv[1]) {
 
 				l('Done');
 			break;
-			case 'git':
+			case 'gitlaravel':
 				validateSite($argv[3]);
 
-				passthru('cd '.WEBROOTS.'/'.$argv[3]);
+				if (strlen(trim(exec('which screen'))) < 1) {
+					//l('Please install screen to run composer in the background');
+				}
+
+				chdir(WEBROOTS.'/'.$argv[3]);
 				passthru('git init');
 				passthru('git remote add origin '.$argv[4]);
 				passthru('git fetch');
 				passthru('git pull origin '.$argv[5]);
 				passthru('git checkout '.$argv[5]);
+				passthru('chown vsm:vsm-web '.WEBROOTS.'/'.$argv[3].' -R');
+				passthru('chmod 2775 '.WEBROOTS.'/'.$argv[3].' -R');
+				passthru('composer update && php artisan key:generate');
+				passthru('npm i && npm run dev');
 
 				l('Done');
 			break;

@@ -19,5 +19,6 @@ bash ./scripts/installers/nginx.sh
 bash ./scripts/installers/mysql.sh
 bash ./scripts/installers/letsencrypt.sh
 bash ./scripts/installers/users.sh
+bash ./scripts/installers/composer.sh
 
 echo "Pending installs completed"

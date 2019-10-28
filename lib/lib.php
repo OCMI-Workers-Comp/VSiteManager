@@ -35,6 +35,16 @@ function createDb($db)
 	}
 }
 
+function deleteDb($db)
+{
+	//mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+	$mysqli = new mysqli(getVar('HOST'), getVar('USER'), getVar('PASSWORD'), '', getVar('PORT'));
+	
+	if ($mysqli->query('DROP DATABASE '.$db) === false) {
+		l('Could not delete database: '.$db);
+	}
+}
+
 function createVsite($sites)
 {
 	$sample = file_get_contents(SAMPLES.'/vsite_sample');
