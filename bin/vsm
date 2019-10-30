@@ -207,4 +207,7 @@ switch ($argv[1]) {
 			break;
 		}
     break;
+    default:
+	l('No such command');
+    break;
 }
