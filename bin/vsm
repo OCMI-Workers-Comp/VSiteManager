@@ -30,7 +30,7 @@ if ($argv[1] !== 'config') {
 	}
 }
 
-if ($argv[1] !== 'init') {
+if ($argv[1] !== 'init' && $argv[1] !== 'config') {
 	if (intval(getVar('INITIALIZED')) === 0) {
 		l('Initialize by running vsm init before continuing');
 		exit;
