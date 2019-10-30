@@ -13,7 +13,7 @@ add-apt-repository ppa:nginx/$nginx
 apt-get update
 
 if service --status-all | grep -Fq 'apache2'; then    
-  sudo service apache2 restart    
+  sudo service apache2 stop    
 fi
 
 apt-get install nginx
