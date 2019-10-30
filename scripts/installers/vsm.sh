@@ -8,7 +8,7 @@ if [[ $VSM_INSTALL == 1 ]]; then
     exit 1
 fi
 
-ln -s $PWD/../../bin/vsm /usr/bin/vsm
+ln -s $DIR/../../bin/vsm /usr/bin/vsm
 vsm update PHP_INSTALL 1
 vsm update VSM_INSTALL 1
 #export PATH=$PWD/../../bin/:$PATH
