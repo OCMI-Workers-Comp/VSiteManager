@@ -122,6 +122,10 @@ switch ($argv[1]) {
 
 				passthru('ln -s /etc/nginx/sites-available/'.$sites[0].'.conf /etc/nginx/sites-enabled/'.$sites[0]);
 
+				foreach ($sites as $site) {
+					addHostEntry($site);
+				}
+
 				passthru('sudo service nginx reload');
 
 				l('Done');
@@ -156,17 +160,19 @@ switch ($argv[1]) {
 				}
 
 				if (trim(readline('Are you sure you wish to purge (DELETES DATABASE!) '.$argv[3].'? (Y/N) ')) === 'Y') {
-					if (file_exists(VSITES.'/'.$argv[3].'.conf')) {
-						unlink(VSITES.'/'.$argv[3].'.conf');
+					if (file_exists(VLINKS.'/'.$argv[3])) {
+						unlink(VLINKS.'/'.$argv[3]);
 					}
 
-					if (file_exists(VLINKS.'/'.$argv[3].'.conf')) {
-						unlink(VLINKS.'/'.$argv[3].'.conf');
+					if (file_exists(VSITES.'/'.$argv[3].'.conf')) {
+						unlink(VSITES.'/'.$argv[3].'.conf');
 					}
 
 					if (file_exists(WEBROOTS.'/'.$argv[3])) {
 						passthru('rm -rf '.WEBROOTS.'/'.$argv[3]);
 					}
+
+					removeHostsEntry($argv[3], 'www.'.$argv[3]);
 
 					deleteDb(explode('.', $argv[3])[0]);
 				} else {

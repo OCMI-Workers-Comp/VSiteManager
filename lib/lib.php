@@ -147,3 +147,50 @@ function updateDirective($fileSrc, $directive, $value)
 		throw new Exception('Cannot write to file '.$file);
 	}
 }
+
+function addHostEntry($domain)
+{
+	if (file_exists('/etc/hosts')) {
+		$hostsFile = file('/etc/hosts');
+		$vsmHostsKey = null;
+
+		foreach ($hostsFile as $k => $line) {
+			if (strpos($line, '# Managed by VSM') !== false) {
+				$vsmHostsKey = $k+1;
+				break;
+			}
+		}
+
+		if (!is_null($vsmHostsKey)) {
+			$hostsFile[$vsmHostsKey] = trim($hostsFile[$vsmHostsKey]);
+
+			$hostsFile[$vsmHostsKey] .= ' '.$domain.PHP_EOL;
+		} else {
+			$hostsFile[] = PHP_EOL.'# Managed by VSM'.PHP_EOL;
+			$hostsFile[] = '127.0.0.1 '.$domain.PHP_EOL;
+		}
+
+		file_put_contents('/etc/hosts', implode(null, $hostsFile));
+	}
+}
+
+function removeHostsEntry($domain)
+{
+	if (file_exists('/etc/hosts')) {
+		$hostsFile = file('/etc/hosts');
+		$vsmHostsKey = null;
+
+		foreach ($hostsFile as $k => $line) {
+			if (strpos($line, '# Managed by VSM') !== false) {
+				$vsmHostsKey = $k+1;
+				break;
+			}
+		}
+
+		if (!is_null($vsmHostsKey)) {
+			$hostsFile[$vsmHostsKey] = str_replace(' '.$domain, '', $hostsFile[$vsmHostsKey]);
+		}
+
+		file_put_contents('/etc/hosts', implode(null, $hostsFile));
+	}
+}
