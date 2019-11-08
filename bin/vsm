@@ -194,20 +194,36 @@ switch ($argv[1]) {
 			case 'gitlaravel':
 				validateSite($argv[3]);
 
-				if (strlen(trim(exec('which screen'))) < 1) {
-					//l('Please install screen to run composer in the background');
-				}
-
 				chdir(WEBROOTS.'/'.$argv[3]);
 				passthru('git init');
 				passthru('git remote add origin '.$argv[4]);
-				passthru('git fetch');
-				passthru('git pull origin '.$argv[5]);
+				passthru('git pull origin '.$argv[5], $status);
+
+				if ($status !== 0) {
+					l('Error: Could not complete git authentication, aborting');
+					passthru('rm -rf '.WEBROOTS.'/'.$argv[3].'/.git');
+					exit;
+				}
+
 				passthru('git checkout '.$argv[5]);
-				passthru('chown vsm:vsm-web '.WEBROOTS.'/'.$argv[3].' -R');
-				passthru('chmod 2775 '.WEBROOTS.'/'.$argv[3].' -R');
-				passthru('composer update && php artisan key:generate');
+				passthru('composer update');
+
+				if (!file_exists(WEBROOTS.'/'.$argv[3].'/.env')) {
+					if (file_exists(WEBROOTS.'/'.$argv[3].'/.env.example')) {
+						l('Creating .env file from example dotenv');
+						passthru('cp '.WEBROOTS.'/'.$argv[3].'/.env.example '.WEBROOTS.'/'.$argv[3].'/.env');
+					} else {
+						l('Creating .env file from Laravel remote');
+						$envFile = file_get_contents('https://raw.githubusercontent.com/laravel/laravel/master/.env.example');
+						file_put_contents(WEBROOTS.'/'.$argv[3].'/.env', $newFile);
+					}
+				}
+
+				passthru('php artisan key:generate');
+
 				passthru('npm i && npm run dev');
+
+				passthru('chmod 775 '.WEBROOTS.'/'.$argv[3].' -R');
 
 				l('Done');
 			break;
