@@ -9,5 +9,5 @@ if [[ $USERS_INSTALL = 1 ]]; then
 fi
 
 groupadd vsm-web
-useradd -G vsm-web vsm
+useradd -G vsm-web vsm -b /home
 vsm config USERS_INSTALL 1
