@@ -221,9 +221,27 @@ switch ($argv[1]) {
 
 				passthru('php artisan key:generate');
 
-				passthru('npm i && npm run dev');
+				if (file_exists(WEBROOTS.'/'.$argv[3].'/.env')) {
+				    updateEnv(WEBROOTS.'/'.$argv[3].'/.env', [
+					'DB_HOST' => getVar('HOST'),
+					'DB_PORT' => getVar('PORT'),
+					'DB_USERNAME' => getVar('USER'),
+					'DB_DATABASE' => explode('.', $argv[3])[0],
+					'DB_PASSWORD' => getVar('PASSWORD'),
+					'APP_URL' => 'http://'.$argv[3]
+				    ]);
 
-				passthru('chmod 775 '.WEBROOTS.'/'.$argv[3].' -R');
+				    l('Updated .env file, ready to migrate and seed');
+				   
+				    passthru('php artisan migrate --seed');
+				} else {
+				    l('No migration file, cannot migrate and seed');
+				}
+
+				passthru('chmod 2775 '.WEBROOTS.'/'.$argv[3]);
+				passthru('chmod 775 '.WEBROOTS.'/'.$argv[3].' -R');				
+
+				passthru('yarn install --ignore-engines && npm run dev');
 
 				l('Done');
 			break;

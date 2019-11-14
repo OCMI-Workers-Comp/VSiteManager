@@ -14,5 +14,7 @@ php composer-setup.php
 php -r "unlink('composer-setup.php');"
 mv composer.phar $DIR/../../bin/composer.phar
 ln -s $DIR/../../bin/composer.phar /usr/bin/composer
-apt-get install npm
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+apt-get install npm yarn -Y
 vsm config COMPOSER_INSTALL 1

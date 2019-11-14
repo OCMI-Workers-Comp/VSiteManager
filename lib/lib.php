@@ -194,3 +194,34 @@ function removeHostsEntry($domain)
 		file_put_contents('/etc/hosts', implode(null, $hostsFile));
 	}
 }
+
+function updateEnv($envFile, $data = array())
+{
+    if (!count($data)) {
+        return;
+    }
+
+    $pattern = '/([^\=]*)\=[^\n]*/';
+
+    $lines = file($envFile);
+    $newLines = [];
+    foreach ($lines as $line) {
+        preg_match($pattern, $line, $matches);
+
+        if (!count($matches)) {
+            $newLines[] = $line;
+            continue;
+        }
+
+        if (!key_exists(trim($matches[1]), $data)) {
+            $newLines[] = $line;
+            continue;
+        }
+
+        $line = trim($matches[1]) . "={$data[trim($matches[1])]}\n";
+        $newLines[] = $line;
+    }
+
+    $newContent = implode('', $newLines);
+    file_put_contents($envFile, $newContent);
+}
