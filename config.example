@@ -21,4 +21,4 @@ USER=root
 PASSWORD=
 PORT=3306
 
-WEBROOT=/var/www
+WEBROOTS=/var/www
