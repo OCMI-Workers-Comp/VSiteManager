@@ -6,11 +6,15 @@ define('LIBS', __DIR__.'/../lib');
 define('SAMPLES', __DIR__.'/../data');
 define('VSITES', '/etc/nginx/sites-available');
 define('VLINKS', '/etc/nginx/sites-enabled');
-define('WEBROOTS', '/var/www');
+/*define('WEBROOTS', '/mnt/c/www');*/
 
 /* Scripts */
 
 require_once LIBS.'/lib.php'; 
+
+/* WebRoot */
+
+define('WEBROOTS', getVar('WEBROOTS'));
 
 /* Listen */
 

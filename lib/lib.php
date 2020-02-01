@@ -56,6 +56,7 @@ function createVsite($sites)
 
 	$sample = str_replace('${ROOT_DIRECTORY}', WEBROOTS.'/'.$sites[0], $sample);
 	$sample = str_replace('${SERVER_NAME}', implode(' ', $sites), $sample);
+	$sample = str_replace('${PHPVER}', getVar('PHPVER'), $sample);
 
 	if (!file_put_contents(VSITES.'/'.$sites[0].'.conf', $sample)) {
 		throw new Exception('Cannot write to file '.$file);
